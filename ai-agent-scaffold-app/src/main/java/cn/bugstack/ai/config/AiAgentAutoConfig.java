@@ -12,6 +12,7 @@ import javax.annotation.Resource;
 
 @Slf4j
 @Configuration
+//自动创建这个类的Bean实例
 @EnableConfigurationProperties(AiAgentAutoConfigProperties.class)
 public class AiAgentAutoConfig implements ApplicationListener<ApplicationReadyEvent> {
 
