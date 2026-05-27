@@ -66,6 +66,9 @@ public class AiAgentConfigTableVO {
         @Data
         public static class ChatModel {
 
+            /**
+             * 模型名称
+             */
             private String model;
             /**
              * MCP工具列表
@@ -83,8 +86,8 @@ public class AiAgentConfigTableVO {
                 @Data
                 public static class SSEServerParameters {
                     private String name;
-                    private String baseUri;
-                    private String sseEndpoint;
+                    private String baseUri; // 基础URL
+                    private String sseEndpoint; // SSE端点路径
                     private Integer requestTimeout = 3000;
 
                 }
@@ -93,7 +96,7 @@ public class AiAgentConfigTableVO {
                 public static class StdioServerParameters {
                     private String name;
                     private Integer requestTimeout = 3000;
-                    private ServerParameters serverParameters;
+                    private ServerParameters serverParameters; // 服务器参数
 
                     @Data
                     public static class ServerParameters {
