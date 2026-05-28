@@ -7,6 +7,8 @@ import cn.bugstack.ai.domain.agent.model.valobj.enums.AgentTypeEnum;
 import cn.bugstack.ai.domain.agent.service.armory.AbstractArmorySupport;
 import cn.bugstack.ai.domain.agent.service.armory.factory.DefaultArmoryFactory;
 import cn.bugstack.wrench.design.framework.tree.StrategyHandler;
+import com.google.adk.agents.BaseAgent;
+import com.google.adk.agents.LoopAgent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -18,7 +20,30 @@ public class LoopAgentNode extends AbstractArmorySupport {
 
     @Override
     protected AiAgentRegisterVO doApply(ArmoryCommandEntity requestParameter, DefaultArmoryFactory.DynamicContext dynamicContext) throws Exception {
-        return null;
+        log.info("Ai Agent 装配操作 - LoopAgentNode");
+
+        //取出并删除第一个工作流
+        List<AiAgentConfigTableVO.Module.AgentWorkflow> agentWorkflows = dynamicContext.getAgentWorkflows();
+        AiAgentConfigTableVO.Module.AgentWorkflow agentWorkflow = agentWorkflows.remove(0);
+
+        //获取工作流中子智能体的名称列表
+        List<String> subAgentNames = agentWorkflow.getSubAgents();
+        //根据名称查询实际的智能体对象
+        List<BaseAgent> subAgents = dynamicContext.queryAgentList(subAgentNames);
+
+        //构建循环智能体对像
+        LoopAgent loopAgent =
+                LoopAgent.builder()
+                        .name(agentWorkflow.getName()) //循环任务的名称
+                        .description(agentWorkflow.getDescription()) // 循环任务的描述
+                        .subAgents(subAgents) // 子智能体列表
+                        .maxIterations(agentWorkflow.getMaxIterations()) // 最大迭代次数
+                        .build();
+
+        //把循环工作流也存入同一个 agentGroups
+        dynamicContext.getAgentGroup().put(agentWorkflow.getName(), loopAgent);
+
+        return router(requestParameter, dynamicContext);
     }
 
     @Override
