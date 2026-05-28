@@ -12,7 +12,7 @@ import java.util.Map;
 public class AiAgentConfigTableVO {
 
     /**
-     * 应用名称
+     * 应用名称：一个应用可以有多个智能体
      */
     private String appName;
 

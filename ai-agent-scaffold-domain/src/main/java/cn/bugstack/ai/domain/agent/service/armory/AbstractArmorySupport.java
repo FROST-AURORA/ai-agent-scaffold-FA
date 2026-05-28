@@ -29,7 +29,6 @@ public abstract class AbstractArmorySupport extends AbstractMultiThreadStrategyR
 
     /**
      * 通用的Bean注册方法
-     *
      * @param beanName  Bean名称
      * @param beanClass Bean类型
      * @param <T>       Bean类型
