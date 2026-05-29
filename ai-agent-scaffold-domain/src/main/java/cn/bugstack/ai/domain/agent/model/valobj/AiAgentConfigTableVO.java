@@ -53,6 +53,8 @@ public class AiAgentConfigTableVO {
         private List<Agent> agents;
         //智能体工作流：定义多个小助手如何协作完成任务的流程
         private List<AgentWorkflow> agentWorkflows;
+        //运行器：运行哪个“小助手”
+        private Runner runner;
 
         @Data
         public static class AiApi {
@@ -130,6 +132,11 @@ public class AiAgentConfigTableVO {
             private String description; // 工作流描述
             private Integer maxIterations = 3; // 最大迭代次数
 
+        }
+
+        @Data
+        public static class Runner {
+            private String agentName;
         }
     }
 

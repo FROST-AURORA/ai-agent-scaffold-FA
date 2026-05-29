@@ -29,6 +29,8 @@ public class AgentWorkflowNode extends AbstractArmorySupport {
     private ParallelAgentNode parallelAgentNode;
     @Resource
     private SequentialAgentNode sequentialAgentNode;
+    @Resource
+    private RunnerNode runnerNode;
 
     @Override
     protected AiAgentRegisterVO doApply(ArmoryCommandEntity requestParameter, DefaultArmoryFactory.DynamicContext dynamicContext) throws Exception {
@@ -38,7 +40,7 @@ public class AgentWorkflowNode extends AbstractArmorySupport {
         List<AiAgentConfigTableVO.Module.AgentWorkflow> agentWorkflows = aiAgentConfigTableVO.getModule().getAgentWorkflows();
 
         if (null == agentWorkflows || agentWorkflows.isEmpty()) {
-            throw new RuntimeException("agentWorkflows is null");
+            return router(requestParameter, dynamicContext);
         }
 
         // 将工作流信息写到上下文中
@@ -51,6 +53,9 @@ public class AgentWorkflowNode extends AbstractArmorySupport {
     public StrategyHandler<ArmoryCommandEntity, DefaultArmoryFactory.DynamicContext, AiAgentRegisterVO> get(ArmoryCommandEntity requestParameter, DefaultArmoryFactory.DynamicContext dynamicContext) throws Exception {
         // 从上下文中获取工作流信息
         List<AiAgentConfigTableVO.Module.AgentWorkflow> agentWorkflows = dynamicContext.getAgentWorkflows();
+        if (null == agentWorkflows || agentWorkflows.isEmpty()){
+            return runnerNode;
+        }
         //取第一个工作流
         AiAgentConfigTableVO.Module.AgentWorkflow agentWorkflow = agentWorkflows.get(0);
 
