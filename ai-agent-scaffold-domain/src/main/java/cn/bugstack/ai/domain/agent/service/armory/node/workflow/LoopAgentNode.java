@@ -25,56 +25,32 @@ public class LoopAgentNode extends AbstractArmorySupport {
     protected AiAgentRegisterVO doApply(ArmoryCommandEntity requestParameter, DefaultArmoryFactory.DynamicContext dynamicContext) throws Exception {
         log.info("Ai Agent 装配操作 - LoopAgentNode");
 
-        //取出并删除第一个工作流
-        List<AiAgentConfigTableVO.Module.AgentWorkflow> agentWorkflows = dynamicContext.getAgentWorkflows();
-        AiAgentConfigTableVO.Module.AgentWorkflow agentWorkflow = agentWorkflows.remove(0);
+        //取出当前的工作流
+        AiAgentConfigTableVO.Module.AgentWorkflow currentAgentWorkflow = dynamicContext.getCurrentAgentWorkflow();
 
         //获取工作流中子智能体的名称列表
-        List<String> subAgentNames = agentWorkflow.getSubAgents();
-        //根据名称查询实际的智能体对象
+        List<String> subAgentNames = currentAgentWorkflow.getSubAgents();
+        //根据名称查询实际的子智能体对象
         List<BaseAgent> subAgents = dynamicContext.queryAgentList(subAgentNames);
 
         //构建循环智能体对像
         LoopAgent loopAgent =
                 LoopAgent.builder()
-                        .name(agentWorkflow.getName()) //循环任务的名称
-                        .description(agentWorkflow.getDescription()) // 循环任务的描述
+                        .name(currentAgentWorkflow.getName()) //循环任务的名称
+                        .description(currentAgentWorkflow.getDescription()) // 循环任务的描述
                         .subAgents(subAgents) // 子智能体列表
-                        .maxIterations(agentWorkflow.getMaxIterations()) // 最大迭代次数
+                        .maxIterations(currentAgentWorkflow.getMaxIterations()) // 最大迭代次数
                         .build();
 
         //把循环工作流也存入同一个 agentGroups
-        dynamicContext.getAgentGroup().put(agentWorkflow.getName(), loopAgent);
+        dynamicContext.getAgentGroup().put(currentAgentWorkflow.getName(), loopAgent);
 
         return router(requestParameter, dynamicContext);
     }
 
     @Override
     public StrategyHandler<ArmoryCommandEntity, DefaultArmoryFactory.DynamicContext, AiAgentRegisterVO> get(ArmoryCommandEntity requestParameter, DefaultArmoryFactory.DynamicContext dynamicContext) throws Exception {
-        //从上下文中取出所有配置的工作流信息
-        List<AiAgentConfigTableVO.Module.AgentWorkflow> agentWorkflows = dynamicContext.getAgentWorkflows();
-        if (null == agentWorkflows || agentWorkflows.isEmpty()) {
-            return defaultStrategyHandler;
-        }
-
-        //取第一个工作流
-        AiAgentConfigTableVO.Module.AgentWorkflow agentWorkflow = agentWorkflows.get(0);
-
-        //获取类型并转换成枚举
-        String type = agentWorkflow.getType();
-        AgentTypeEnum agentTypeEnum = AgentTypeEnum.formType(type);
-        if (null == agentTypeEnum) {
-            throw new RuntimeException("agentWorkflow type is error!");
-        }
-
-        String node = agentTypeEnum.getNode();
-
-        return switch (node) {
-            case "parallelAgentNode" -> getBean("parallelAgentNode");
-            case "sequentialAgentNode" -> getBean("sequentialAgentNode");
-            default -> defaultStrategyHandler;
-        };
-
+        return getBean("agentWorkflowNode");
     }
 
 }

@@ -39,12 +39,18 @@ public class AgentWorkflowNode extends AbstractArmorySupport {
         AiAgentConfigTableVO aiAgentConfigTableVO = requestParameter.getAiAgentConfigTableVO();
         List<AiAgentConfigTableVO.Module.AgentWorkflow> agentWorkflows = aiAgentConfigTableVO.getModule().getAgentWorkflows();
 
-        if (null == agentWorkflows || agentWorkflows.isEmpty()) {
+        if (null == agentWorkflows || agentWorkflows.isEmpty() || dynamicContext.getCurrentStepIndex() >= agentWorkflows.size()) {
+            // 设置当前工作流结果值
+            dynamicContext.setCurrentAgentWorkflow(null);
+            // 路由下节点
             return router(requestParameter, dynamicContext);
         }
 
-        // 将工作流信息写到上下文中
-        dynamicContext.setAgentWorkflows(agentWorkflows);
+        // 在上下文中设置当前准备执行流转的工作流
+        dynamicContext.setCurrentAgentWorkflow(agentWorkflows.get(dynamicContext.getCurrentStepIndex()));
+
+        // 步骤值增加
+        dynamicContext.addCurrentStepIndex();
 
         return router(requestParameter, dynamicContext);
     }
@@ -52,15 +58,13 @@ public class AgentWorkflowNode extends AbstractArmorySupport {
     @Override
     public StrategyHandler<ArmoryCommandEntity, DefaultArmoryFactory.DynamicContext, AiAgentRegisterVO> get(ArmoryCommandEntity requestParameter, DefaultArmoryFactory.DynamicContext dynamicContext) throws Exception {
         // 从上下文中获取工作流信息
-        List<AiAgentConfigTableVO.Module.AgentWorkflow> agentWorkflows = dynamicContext.getAgentWorkflows();
-        if (null == agentWorkflows || agentWorkflows.isEmpty()){
+        AiAgentConfigTableVO.Module.AgentWorkflow currentAgentWorkflow = dynamicContext.getCurrentAgentWorkflow();
+
+        if (null == currentAgentWorkflow){
             return runnerNode;
         }
-        //取第一个工作流
-        AiAgentConfigTableVO.Module.AgentWorkflow agentWorkflow = agentWorkflows.get(0);
 
-        //获取工作流类型并转换为枚举
-        String type = agentWorkflow.getType();
+        String type = currentAgentWorkflow.getType();
         AgentTypeEnum agentTypeEnum = AgentTypeEnum.formType(type);
 
         if (null == agentTypeEnum){
