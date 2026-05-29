@@ -16,6 +16,9 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.util.List;
 
+/*
+ * 读取配置里的 agent-workflows，放入上下文，然后看第一个 workflow 的 type，通过 AgentTypeEnum 路由到具体工作流节点
+ */
 @Slf4j
 @Service
 public class AgentWorkflowNode extends AbstractArmorySupport {

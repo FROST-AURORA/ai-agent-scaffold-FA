@@ -14,6 +14,9 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+/**
+ * @description: 并行智能体节点
+ */
 @Slf4j
 @Service("parallelAgentNode")
 public class ParallelAgentNode extends AbstractArmorySupport {

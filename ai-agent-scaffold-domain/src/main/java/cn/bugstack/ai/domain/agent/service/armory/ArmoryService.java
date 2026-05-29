@@ -19,6 +19,11 @@ public class ArmoryService implements IArmoryService {
     @Resource
     private DefaultArmoryFactory defaultArmoryFactory;
 
+    /**
+     * 接收智能体配置表
+     * @param tables 智能体配置表
+     * @throws Exception 异常
+     */
     @Override
     public void acceptArmoryAgents(List<AiAgentConfigTableVO> tables) throws Exception {
         for (AiAgentConfigTableVO table : tables) {

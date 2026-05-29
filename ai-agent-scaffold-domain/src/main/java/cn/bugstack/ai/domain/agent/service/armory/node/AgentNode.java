@@ -12,11 +12,18 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.util.List;
 
+/*
+ *把配置里每个 agent 配置组装成 Google ADK 的 LlmAgent
+ */
 @Slf4j
 @Service
 public class AgentNode extends AbstractArmorySupport {
+
+    @Resource
+    private AgentWorkflowNode agentWorkflowNode;
 
     @Override
     protected AiAgentRegisterVO doApply(ArmoryCommandEntity requestParameter, DefaultArmoryFactory.DynamicContext dynamicContext) throws Exception {
@@ -52,7 +59,7 @@ public class AgentNode extends AbstractArmorySupport {
 
     @Override
     public StrategyHandler<ArmoryCommandEntity, DefaultArmoryFactory.DynamicContext, AiAgentRegisterVO> get(ArmoryCommandEntity requestParameter, DefaultArmoryFactory.DynamicContext dynamicContext) throws Exception {
-        return defaultStrategyHandler;
+        return agentWorkflowNode;
     }
 
 }

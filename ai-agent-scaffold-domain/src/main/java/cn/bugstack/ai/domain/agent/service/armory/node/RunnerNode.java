@@ -12,7 +12,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 /**
- * 执行节点
+ * 最终执行器装配节点
+ * 封装成 AiAgentRegisterVO，最后用 agentId 注册到 Spring 容器里
  */
 @Slf4j
 @Service

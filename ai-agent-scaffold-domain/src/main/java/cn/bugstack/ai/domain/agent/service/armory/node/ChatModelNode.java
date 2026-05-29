@@ -29,6 +29,9 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * 根据 chat-model 创建 OpenAiChatModel
+ */
 @Slf4j
 @Service
 public class ChatModelNode extends AbstractArmorySupport {

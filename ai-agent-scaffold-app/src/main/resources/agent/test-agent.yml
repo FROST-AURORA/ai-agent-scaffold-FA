@@ -12,10 +12,10 @@ ai:
             ai-api:
               base-url: https://dashscope.aliyuncs.com/compatible-mode
               api-key: sk-a5c9b22c65a54fe6a6ac218f0690355e
-              completions-path: v1/chat/completions
-              embeddings-path: v1/embeddings
+              completions-path: /v1/chat/completions
+              embeddings-path: /v1/embeddings
             chat-model:
-              model: gpt-4.1
+              model: qwen3.6-plus
               tool-mcp-list:
                 - sse:
                     name: baidu-search

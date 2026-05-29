@@ -14,6 +14,9 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+/**
+ * @description: 循环智能体节点
+ */
 @Slf4j
 @Service("loopAgentNode")
 public class LoopAgentNode extends AbstractArmorySupport {
