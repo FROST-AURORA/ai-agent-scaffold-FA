@@ -80,11 +80,16 @@ public class AiAgentConfigTableVO {
             @Data
             public static class ToolMcp {
 
+                //通过 HTTP + SSE 长连接访问远程 MCP 服务：你的 Agent 通过 URL 去连一个已经部署好的 MCP Server。
                 private SSEServerParameters sse;
 
+                //本地进程的标准输入输出：Agent 启动一个脚本或命令
                 private StdioServerParameters stdio;
 
-                //HTTP 网络请求（云端 API、第三方服务）
+                //直接调用 Spring 容器里的本地 Bean：不走网络，也不启动外部进程，直接从 Spring 容器里拿一个 Bean 来提供 MCP 工具能力
+                private LocalParameters local;
+
+
                 @Data
                 public static class SSEServerParameters {
                     private String name;
@@ -93,7 +98,6 @@ public class AiAgentConfigTableVO {
                     private Integer requestTimeout = 3000;
 
                 }
-                //本地进程的标准输入输出（本地脚本、文件系统操作）
                 @Data
                 public static class StdioServerParameters {
                     private String name;
@@ -107,6 +111,10 @@ public class AiAgentConfigTableVO {
                         private Map<String, String> env; // 环境变量
 
                     }
+                }
+                @Data
+                public static class LocalParameters {
+                    private String name;
                 }
 
             }

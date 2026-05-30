@@ -22,6 +22,8 @@ ai:
                     base-uri: http://appbuilder.baidu.com/v2/ai_search/mcp/
                     sse-endpoint: sse?api_key=Bearer+bce-v3/ALTAK-VNHFDDhxotqBJEQtPgDJv/2c043efe186253a2d6195cb95a1ec2be70857256
                     request-timeout: 500000
+                - local:
+                    name: myToolCallbackProvider
             agents:
               - name: onlyAgent
                 description: 小傅哥学习项目计划
