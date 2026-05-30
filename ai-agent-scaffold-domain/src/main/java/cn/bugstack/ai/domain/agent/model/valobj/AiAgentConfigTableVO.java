@@ -144,7 +144,10 @@ public class AiAgentConfigTableVO {
 
         @Data
         public static class Runner {
+            //运行器名称
             private String agentName;
+            //运行器插件集合
+            private List<String> pluginNameList;
         }
     }
 

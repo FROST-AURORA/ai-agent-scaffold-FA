@@ -10,11 +10,16 @@ import cn.bugstack.ai.types.exception.AppException;
 import cn.bugstack.wrench.design.framework.tree.StrategyHandler;
 import com.google.adk.agents.BaseAgent;
 import com.google.adk.agents.SequentialAgent;
+import com.google.adk.plugins.BasePlugin;
 import com.google.adk.runner.InMemoryRunner;
+import com.google.common.collect.ImmutableList;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 最终执行器装配节点
@@ -59,8 +64,7 @@ public class RunnerNode extends AbstractArmorySupport {
     }
 
     // 获取运行器并构建运行器对象
-    @NotNull
-    private static InMemoryRunner getRunner(DefaultArmoryFactory.DynamicContext dynamicContext, AiAgentConfigTableVO aiAgentConfigTableVO, String appName) {
+    private  InMemoryRunner getRunner(DefaultArmoryFactory.DynamicContext dynamicContext, AiAgentConfigTableVO aiAgentConfigTableVO, String appName) {
         AiAgentConfigTableVO.Module.Runner runnerConfig = aiAgentConfigTableVO.getModule().getRunner();
 
         String agentName = runnerConfig.getAgentName();
@@ -71,7 +75,20 @@ public class RunnerNode extends AbstractArmorySupport {
 
         BaseAgent baseAgent = dynamicContext.getAgentGroup().get(agentName);
 
-        return new InMemoryRunner(baseAgent, appName);
+        List<BasePlugin> plugins;
+        List<String> pluginNameList = runnerConfig.getPluginNameList();
+        if (null != pluginNameList && !pluginNameList.isEmpty()) {
+            plugins = new ArrayList<>();
+            for (String pluginName : pluginNameList) {
+                BasePlugin plugin = getBean(pluginName);
+                plugins.add(plugin);
+            }
+        } else {
+            //配置中没有指定插件时，创建一个空的插件列表
+            plugins = ImmutableList.of();
+        }
+
+        return new InMemoryRunner(baseAgent, appName, plugins);
     }
     // 获取默认处理器
     @Override
