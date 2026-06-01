@@ -2,7 +2,7 @@ package cn.bugstack.ai.domain.agent.service.armory.matter.mcp.client.impl;
 
 import cn.bugstack.ai.domain.agent.model.valobj.AiAgentConfigTableVO;
 import cn.bugstack.ai.domain.agent.service.armory.matter.mcp.client.TooMcpCreateService;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import io.modelcontextprotocol.client.McpClient;
 import io.modelcontextprotocol.client.McpSyncClient;
 import io.modelcontextprotocol.client.transport.ServerParameters;
@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.mcp.SyncMcpToolCallbackProvider;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.stereotype.Service;
+//import tools.jackson.databind.json.JsonMapper;
 
 import java.time.Duration;
 
@@ -32,7 +33,7 @@ public class StdioToolMcpCreateService implements TooMcpCreateService {
                 .build();
 
         McpSyncClient mcpSyncClient = McpClient
-                .sync(new StdioClientTransport(stdioParams, new JacksonMcpJsonMapper(new ObjectMapper())))
+                .sync(new StdioClientTransport(stdioParams, new JacksonMcpJsonMapper(new JsonMapper())))
                 .requestTimeout(Duration.ofSeconds(stdioConfig.getRequestTimeout()))
                 .build();
 
