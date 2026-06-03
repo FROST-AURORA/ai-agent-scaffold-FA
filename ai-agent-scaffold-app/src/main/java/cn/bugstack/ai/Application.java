@@ -1,5 +1,6 @@
 package cn.bugstack.ai;
 
+import cn.bugstack.ai.domain.agent.service.armory.matter.mcp.server.GroupBuyLocalToolService;
 import cn.bugstack.ai.domain.agent.service.armory.matter.mcp.server.MyTestMcpService;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.ai.tool.method.MethodToolCallbackProvider;
@@ -17,7 +18,11 @@ public class Application {
     }
 
     @Bean("myToolCallbackProvider")
-    public ToolCallbackProvider testTools(MyTestMcpService testService) {
-        return MethodToolCallbackProvider.builder().toolObjects(testService).build();
+    public ToolCallbackProvider tools(
+            MyTestMcpService testService,
+            GroupBuyLocalToolService groupBuyLocalToolService) {
+        return MethodToolCallbackProvider.builder()
+                .toolObjects(testService, groupBuyLocalToolService)
+                .build();
     }
 }

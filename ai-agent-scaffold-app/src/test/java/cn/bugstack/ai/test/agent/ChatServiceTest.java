@@ -28,7 +28,7 @@ public class ChatServiceTest {
 
     @Test
     public void test_handleMessage_01() {
-        List<String> message = chatService.handleMessage("100003", "xiaofuge", "基于 skill 解答，电脑性能优化");
+        List<String> message = chatService.handleMessage("300000", "xiaofuge", "你能简述我这个拼团项目的活动配置流程吗");
         log.info("测试结果:{}", JSON.toJSONString(message));
     }
 
