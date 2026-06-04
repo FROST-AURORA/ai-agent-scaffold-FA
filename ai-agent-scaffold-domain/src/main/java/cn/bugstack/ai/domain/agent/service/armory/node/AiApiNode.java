@@ -9,7 +9,9 @@ import cn.bugstack.wrench.design.framework.tree.StrategyHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.ai.openai.api.OpenAiApi;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClient;
 
 import javax.annotation.Resource;
 
@@ -32,12 +34,18 @@ public class AiApiNode extends AbstractArmorySupport {
         AiAgentConfigTableVO aiAgentConfigTableVO = requestParameter.getAiAgentConfigTableVO();
         AiAgentConfigTableVO.Module.AiApi aiApiConfig = aiAgentConfigTableVO.getModule().getAiApi();
 
+        int requestTimeout = aiApiConfig.getRequestTimeout() != null ? aiApiConfig.getRequestTimeout() : 300000;
+        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
+        requestFactory.setConnectTimeout(requestTimeout);
+        requestFactory.setReadTimeout(requestTimeout);
+
         // 创建并封装 OpenAiApi 对象
         OpenAiApi openAiApi = OpenAiApi.builder()
                 .baseUrl(aiApiConfig.getBaseUrl())
                 .apiKey(aiApiConfig.getApiKey())
                 .completionsPath(StringUtils.isNotBlank(aiApiConfig.getCompletionsPath()) ? aiApiConfig.getCompletionsPath() : "v1/chat/completions")
                 .embeddingsPath(StringUtils.isNotBlank(aiApiConfig.getEmbeddingsPath()) ? aiApiConfig.getEmbeddingsPath() : "v1/embeddings")
+                .restClientBuilder(RestClient.builder().requestFactory(requestFactory))
                 .build();
 
         // 将 OpenAiApi 对象写入上下文对象
