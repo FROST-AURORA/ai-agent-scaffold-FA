@@ -62,6 +62,7 @@ public class AiAgentConfigTableVO {
             private String apiKey;
             private String completionsPath = "/v1/chat/completions";
             private String embeddingsPath = "/v1/embeddings";
+            private Integer requestTimeout = 300000;
 
         }
 
