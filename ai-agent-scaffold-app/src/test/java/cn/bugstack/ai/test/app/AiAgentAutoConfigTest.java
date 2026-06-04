@@ -57,7 +57,7 @@ public class AiAgentAutoConfigTest {
 
     @Test
     public void test_handlerMessage_02(){
-        AiAgentRegisterVO aiAgentRegisterVO = applicationContext.getBean("100002", AiAgentRegisterVO.class);
+        AiAgentRegisterVO aiAgentRegisterVO = applicationContext.getBean("300000", AiAgentRegisterVO.class);
 
         String appName = aiAgentRegisterVO.getAppName();
         InMemoryRunner runner = aiAgentRegisterVO.getRunner();

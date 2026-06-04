@@ -14,8 +14,9 @@ ai:
               api-key: sk-a5c9b22c65a54fe6a6ac218f0690355e
               completions-path: /v1/chat/completions
               embeddings-path: /v1/embeddings
+              request-timeout: 500000
             chat-model:
-              model: qwen3.6-plus
+              model: qwen3.7-plus
               tool-mcp-list:
                 - sse:
                     name: baidu-search
@@ -84,7 +85,7 @@ ai:
                 description: 并行生成多个绘图方案
                 sub-agents:
                   - agent_drawer
-                  - agent_drawer
+                  - agent_reviewer
 
               # 对外；定义一个串行工作流，按顺序执行分析、绘图、检查
               - type: sequential

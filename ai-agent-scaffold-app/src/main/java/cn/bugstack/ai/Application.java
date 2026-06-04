@@ -18,11 +18,10 @@ public class Application {
     }
 
     @Bean("myToolCallbackProvider")
-    public ToolCallbackProvider tools(
-            MyTestMcpService testService,
-            GroupBuyLocalToolService groupBuyLocalToolService) {
+    public ToolCallbackProvider tools(MyTestMcpService testService, GroupBuyLocalToolService groupBuyLocalToolService) {
         return MethodToolCallbackProvider.builder()
                 .toolObjects(testService, groupBuyLocalToolService)
                 .build();
     }
 }
+

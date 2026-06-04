@@ -41,8 +41,6 @@ public class RunnerNode extends AbstractArmorySupport {
         /*
          * InMemoryRunner
          * Google ADK 框架提供的一个运行器，它的作用是真正执行智能体的任务
-         * sequentialAgent：要执行的智能体对象（包含所有配置好的任务和流程）
-         * appName：应用名称（用于标识和日志记录）
          */
         InMemoryRunner runner = getRunner(dynamicContext, aiAgentConfigTableVO, appName);
 
