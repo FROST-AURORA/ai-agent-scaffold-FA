@@ -1,5 +1,5 @@
 # 普通镜像构建，随系统版本构建 amd/arm mac 电脑可以选择第2条build方式构建
-docker build -t ai-draw-io-app:1.3 -f ./Dockerfile .
+docker build -t ai-draw-io-app:1.4 -f ./Dockerfile .
 
 #docker build --platform linux/amd64,linux/arm64 --load -t FA/ai-draw-io-app:1.3 -f ./Dockerfile .
 
