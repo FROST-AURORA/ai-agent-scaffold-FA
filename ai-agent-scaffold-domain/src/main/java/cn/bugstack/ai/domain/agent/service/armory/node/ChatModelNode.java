@@ -10,6 +10,7 @@ import cn.bugstack.ai.domain.agent.service.armory.matter.mcp.client.factory.Defa
 import cn.bugstack.wrench.design.framework.tree.StrategyHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.ai.chat.model.StreamingChatModel;
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.openai.api.OpenAiApi;
@@ -58,15 +59,21 @@ public class ChatModelNode extends AbstractArmorySupport {
         }
 
         // 创建并封装 ChatModel 对象
-        ChatModel chatModel = OpenAiChatModel.builder()
-                .openAiApi(openAiApi) // 设置API连接
-                .defaultOptions(OpenAiChatOptions.builder()
-                        .model(chatModelConfig.getModel()) // 设置模型名称
-                        .toolCallbacks(toolCallbackList)
-                        .build())
+        OpenAiChatOptions chatOptions = OpenAiChatOptions.builder()
+                .model(chatModelConfig.getModel())
+                .toolCallbacks(toolCallbackList)
                 .build();
 
+        OpenAiChatModel openAiChatModel = OpenAiChatModel.builder()
+                .openAiApi(openAiApi) // 设置API连接
+                .defaultOptions(chatOptions)
+                .build();
+
+        ChatModel chatModel = openAiChatModel;
+        StreamingChatModel streamingChatModel = openAiChatModel;
+
         dynamicContext.setChatModel(chatModel);
+        dynamicContext.setStreamingChatModel(streamingChatModel);
 
         return router(requestParameter, dynamicContext);
     }

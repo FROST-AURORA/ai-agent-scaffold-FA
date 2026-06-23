@@ -10,6 +10,7 @@ import com.google.adk.agents.LlmAgent;
 import com.google.adk.models.springai.SpringAI;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.ai.chat.model.StreamingChatModel;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -30,9 +31,11 @@ public class AgentNode extends AbstractArmorySupport {
         log.info("Ai Agent 装配操作 - AgentNode");
         // 从上下文中获取模型配置
         ChatModel chatModel = dynamicContext.getChatModel();
+        StreamingChatModel streamingChatModel = dynamicContext.getStreamingChatModel();
 
         // 从请求参数中获取智能体列表
         AiAgentConfigTableVO aiAgentConfigTableVO = requestParameter.getAiAgentConfigTableVO();
+        String modelName = aiAgentConfigTableVO.getModule().getChatModel().getModel();
         List<AiAgentConfigTableVO.Module.Agent> agents = aiAgentConfigTableVO.getModule().getAgents();
 
         for (AiAgentConfigTableVO.Module.Agent agentConfig : agents) {
@@ -46,7 +49,7 @@ public class AgentNode extends AbstractArmorySupport {
             LlmAgent llmAgent = LlmAgent.builder()
                     .name(agentConfig.getName()) // 助手名称
                     .description(agentConfig.getDescription()) // 助手描述
-                    .model(new SpringAI(chatModel)) // 模型
+                    .model(streamingChatModel != null ? new SpringAI(chatModel, streamingChatModel, modelName) : new SpringAI(chatModel)) // 模型
                     .instruction(agentConfig.getInstruction()) // 指令
                     .outputKey(agentConfig.getOutputKey()) // 输出结果键名
                     .build();

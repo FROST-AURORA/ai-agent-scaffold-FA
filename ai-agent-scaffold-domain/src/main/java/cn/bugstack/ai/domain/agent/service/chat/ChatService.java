@@ -8,6 +8,7 @@ import cn.bugstack.ai.domain.agent.service.IChatService;
 import cn.bugstack.ai.domain.agent.service.armory.factory.DefaultArmoryFactory;
 import cn.bugstack.ai.types.enums.ResponseCode;
 import cn.bugstack.ai.types.exception.AppException;
+import com.google.adk.agents.RunConfig;
 import com.google.adk.events.Event;
 import com.google.adk.runner.InMemoryRunner;
 import com.google.adk.sessions.Session;
@@ -134,8 +135,16 @@ public class ChatService implements IChatService {
 
         InMemoryRunner runner = aiAgentRegisterVO.getRunner();
 
+        if (sessionId == null || sessionId.isEmpty()) {
+            sessionId = createSession(agentId, userId);
+        }
+
         Content userMsg = Content.fromParts(Part.fromText(message));
-        return runner.runAsync(userId, sessionId, userMsg);
+        //指定流式输出模式为SSE
+        RunConfig runConfig = RunConfig.builder()
+                .streamingMode(RunConfig.StreamingMode.SSE)
+                .build();
+        return runner.runAsync(userId, sessionId, userMsg, runConfig);
     }
 
     //处理复杂消息（支持文本、文件、图片等多种类型）

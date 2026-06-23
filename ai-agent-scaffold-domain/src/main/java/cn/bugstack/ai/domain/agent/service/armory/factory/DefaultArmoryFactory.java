@@ -12,6 +12,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.ai.chat.model.StreamingChatModel;
 import org.springframework.ai.openai.api.OpenAiApi;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
@@ -59,6 +60,8 @@ public class DefaultArmoryFactory {
          * LLM ChatModel
          */
         private ChatModel chatModel;
+
+        private StreamingChatModel streamingChatModel;
 
 
         /**

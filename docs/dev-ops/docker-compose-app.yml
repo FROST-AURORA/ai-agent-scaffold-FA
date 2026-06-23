@@ -34,7 +34,7 @@ services:
 
   ## 前端服务，注意 image 如果你有自己的镜像，记得更换。
   ai-draw-io-front:
-    image: ai-draw-io-front:1.2
+    image: ai-draw-io-front:1.4
 #    image: fuzhengwei/ai-draw-io-front:1.0
     container_name: ai-draw-io-front
     restart: always

@@ -8,12 +8,17 @@ import cn.bugstack.ai.domain.agent.service.IChatService;
 import cn.bugstack.ai.types.enums.ResponseCode;
 import cn.bugstack.ai.types.exception.AppException;
 import com.alibaba.fastjson.JSON;
+import io.reactivex.rxjava3.disposables.Disposable;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitter;
 
 import javax.annotation.Resource;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 /**
@@ -167,35 +172,96 @@ public class AgentServiceController implements IAgentService {
      * @param requestDTO
      * @return
      */
-    @RequestMapping(value = "chat_stream", method = RequestMethod.POST)
+    @RequestMapping(value = "chat_stream", method = RequestMethod.POST, produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     @Override
     public ResponseBodyEmitter chatStream(@RequestBody ChatRequestDTO requestDTO) {
-        ResponseBodyEmitter emitter = new ResponseBodyEmitter(3 * 60 * 1000L);//指定超时时间
+        ResponseBodyEmitter emitter = new ResponseBodyEmitter(10 * 60 * 1000L);//指定超时时间
+        AtomicBoolean emitterClosed = new AtomicBoolean(false);
+        AtomicReference<Disposable> disposableRef = new AtomicReference<>();
+        Runnable disposeStream = () -> {
+            Disposable disposable = disposableRef.get();
+            if (null != disposable && !disposable.isDisposed()) {
+                disposable.dispose();
+            }
+        };
+        emitter.onCompletion(() -> {
+            emitterClosed.set(true);
+            disposeStream.run();
+        });
+        emitter.onTimeout(() -> {
+            emitterClosed.set(true);
+            disposeStream.run();
+        });
+        emitter.onError(error -> {
+            emitterClosed.set(true);
+            disposeStream.run();
+        });
         try {
+            sendSseEvent(emitter, "status", "正在分析需求");
             log.info("流式对话 agentId:{} userId:{} sessionId:{} message:{}", requestDTO.getAgentId(), requestDTO.getUserId(), requestDTO.getSessionId(), requestDTO.getMessage());
-            chatService.handleMessageStream(requestDTO.getAgentId(), requestDTO.getUserId(), requestDTO.getSessionId(), requestDTO.getMessage())
+            Disposable disposable = chatService.handleMessageStream(requestDTO.getAgentId(), requestDTO.getUserId(), requestDTO.getSessionId(), requestDTO.getMessage())
                     //订阅这个流
                     .subscribe(
-                            //.subscribe() 已经帮你把流"拆开"了，这里event 就是这个流中的当前数据
+                            //.subscribe() 已经帮你把流"拆开"了，这里event 就是这个流中的当前数据，每当流里收到一条正常数据时执行。
                             event -> {
+                                if (emitterClosed.get()) {
+                                    return;
+                                }
                                 try {
                                     //使用 emitter 发送数据
-                                    emitter.send(event.stringifyContent());
+                                    sendSseEvent(emitter, "delta", event.stringifyContent());
                                 } catch (Exception e) {
-                                    log.error("流式对话发送失败", e);
-                                    emitter.completeWithError(e);
+                                    if (emitterClosed.compareAndSet(false, true)) {
+                                        log.error("流式对话发送失败", e);
+                                        disposeStream.run();
+                                        emitter.completeWithError(e);
+                                    }
                                 }
                             },
-                            // 如果整个流式过程出现异常，就调用这个方法通知前端"出错了"
-                            emitter::completeWithError,
-                            // 当AI完整回答完毕，没有更多内容时，调用这个方法告诉前端"结束了"
-                            emitter::complete
+                            // 如果整个流式过程出现异常，就调用这个方法通知前端"出错了"，如果流式过程中发生异常时执行。
+                            e -> {
+                                if (emitterClosed.compareAndSet(false, true)) {
+                                    try {
+                                        log.error("stream chat failed", e);
+                                        sendSseEvent(emitter, "error", e.getMessage());
+                                    } catch (Exception sendError) {
+                                        log.error("stream error event send failed", sendError);
+                                    } finally {
+                                        disposeStream.run();
+                                        emitter.completeWithError(e);
+                                    }
+                                }
+                            },
+                            // 当AI完整回答完毕，没有更多内容时，调用这个方法告诉前端"结束了"，流正常结束时执行。
+                            () -> {
+                                if (emitterClosed.compareAndSet(false, true)) {
+                                    try {
+                                        sendSseEvent(emitter, "done", "");
+                                    } catch (Exception e) {
+                                        log.error("stream done event send failed", e);
+                                    } finally {
+                                        disposeStream.run();
+                                        emitter.complete();
+                                    }
+                                }
+                            }
                     );
+            disposableRef.set(disposable);
+            if (emitterClosed.get()) {
+                disposeStream.run();
+            }
         } catch (Exception e) {
             log.error("流式对话失败", e);
-            emitter.completeWithError(e);
+            if (emitterClosed.compareAndSet(false, true)) {
+                disposeStream.run();
+                emitter.completeWithError(e);
+            }
         }
         return emitter;
+    }
+
+    private void sendSseEvent(ResponseBodyEmitter emitter, String type, String content) throws Exception {
+        emitter.send("data: " + JSON.toJSONString(Map.of("type", type, "content", content)) + "\n\n", MediaType.TEXT_EVENT_STREAM);
     }
 
 }
