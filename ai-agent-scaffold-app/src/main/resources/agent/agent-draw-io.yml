@@ -47,23 +47,55 @@ ai:
                   1. 如果输入是 {"type": "user", ...}，请直接原样输出该 JSON。
                   2. 如果输入是详细的绘图需求：
                      - 设计图表的结构（UML、流程图、时序图等）。
-                     - 生成符合 Draw.io 规范的 XML 代码。详细的绘图需求
+                     - 生成符合 Draw.io 规范的 XML 代码。
                      - 确保节点布局合理，逻辑清晰，连线不能交叉等。
-                     - 输出生成的 XML 内容。
+                     - 只输出原始 XML 内容，不要输出 Markdown、代码块或解释文字。
                 output-key: draft_diagram
 
               # 3. 检查与优化智能体
               - name: agent_reviewer
-                description: 检查绘图结果，确保无连线交叉等问题，并格式化最终输出。
+                description: 检查并修复 Draw.io XML，确保 XML 可被 Draw.io 渲染。
                 instruction: |
                   你是一个图表质量检查员。请审查输入 {draft_diagram}：
-                  1. 如果输入是 {"type": "user", ...}，请直接原样输出。
-                  2. 如果输入是 XML 代码：
-                     - 检查连线是否混乱或有严重的交叉（在文本层面尽力优化布局逻辑）。
-                     - 检查 XML 语法是否正确。
-                     - 如果有问题，请尝试修正 XML。
-                     - 最终输出必须严格符合 JSON 格式：
-                       {"type": "drawio", "content": "这里放最终的XML字符串"}
+                  1. 如果输入是 {"type": "user", ...}，必须原样输出该 JSON，不要增加任何解释。
+                  2. 如果输入包含 Draw.io XML，必须提取真正的 XML 内容，删除所有 Markdown 代码块标记和解释性文字。
+                  3. 必须检查并修复 XML 语法，尤其是以下常见错误：
+                     - 错误：<?xmlversion="1.0"encoding="UTF-8"?>
+                       正确：<?xml version="1.0" encoding="UTF-8"?>
+                     - 错误：<mxfilehost="app.diagrams.net">
+                       正确：<mxfile host="app.diagrams.net">
+                     - 错误：<diagramid="xxx"name="xxx">
+                       正确：<diagram id="xxx" name="xxx">
+                     - 错误：<mxCellid="0"/>
+                       正确：<mxCell id="0"/>
+                     - 错误：<mxGeometryx="10"y="20"width="100"height="40"as="geometry"/>
+                       正确：<mxGeometry x="10" y="20" width="100" height="40" as="geometry"/>
+                  4. XML 必须以 <mxfile 开头，或 XML 声明后紧跟 <mxfile。
+                  5. XML 必须包含 <diagram>、<mxGraphModel>、<root>、id="0" 和 id="1" 的基础 mxCell。
+                  6. 所有 XML 属性之间必须有空格，不能出现 mxfilehost、diagramid、mxCellid、mxGeometryx 这类粘连标签。
+                  7. XML 属性值中的特殊字符必须正确转义，尤其是 & 必须写成 &amp;。
+                  8. 检查连线是否混乱或有严重交叉，并在文本层面尽力优化布局逻辑。
+                  9. 最终只输出修复后的原始 Draw.io XML，不要输出 JSON、Markdown、代码块、解释文字或额外字段。
+                output-key: reviewed_diagram
+
+              # 4. 最终 JSON 封装智能体
+              - name: agent_final_json
+                description: 将追问消息或最终 Draw.io XML 严格封装为前端可消费的 JSON。
+                instruction: |
+                  你是最终输出封装智能体。请根据 {reviewed_diagram} 输出唯一 JSON 对象。
+
+                  如果上游结果是 {"type":"user",...}，必须原样输出该 JSON，不要增加任何解释。
+
+                  否则，将 {reviewed_diagram} 封装为：
+                  {"type":"drawio","content":"这里放最终 Draw.io XML 字符串"}
+
+                  严格要求：
+                  1. 最终只能输出一个 JSON 对象。
+                  2. type 只能是 user 或 drawio。
+                  3. content 必须是字符串。
+                  4. content 中必须是完整 Draw.io XML，根节点为 <mxfile>，或 XML 声明后紧跟 <mxfile>。
+                  5. content 中的 XML 双引号、换行、反斜杠必须按 JSON 字符串规则转义。
+                  6. 不允许输出 Markdown、代码块、解释文字或额外字段。
                 output-key: final_result
 
             agent-workflows:
@@ -87,11 +119,12 @@ ai:
               # 对外；定义一个串行工作流，按顺序执行分析、绘图、检查
               - type: sequential
                 name: sequential_draw_process
-                description: 标准绘图流程：分析 -> 绘图 -> 检查
+                description: 标准绘图流程：分析 -> 绘图 -> 检查 -> JSON封装
                 sub-agents:
                   - agent_analyst
                   - agent_drawer
                   - agent_reviewer
+                  - agent_final_json
 
             runner:
               # 指定入口为串行工作流，这是最稳健的配置

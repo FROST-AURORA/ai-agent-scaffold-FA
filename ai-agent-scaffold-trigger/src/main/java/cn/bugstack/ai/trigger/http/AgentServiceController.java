@@ -128,7 +128,7 @@ public class AgentServiceController implements IAgentService {
 
             ChatResponseDTO responseDTO = new ChatResponseDTO();
             try {
-                // 尝试获取最后一条消息并解析
+                // 尝试获取最后一条消息并解析，成功type为 drawio
                 String result = messages.stream().reduce((first, second) -> second).orElse("");
                 ChatResponseDTO parsed = JSON.parseObject(result, ChatResponseDTO.class);
                 if (null != parsed) {
@@ -175,23 +175,33 @@ public class AgentServiceController implements IAgentService {
     @RequestMapping(value = "chat_stream", method = RequestMethod.POST, produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     @Override
     public ResponseBodyEmitter chatStream(@RequestBody ChatRequestDTO requestDTO) {
-        ResponseBodyEmitter emitter = new ResponseBodyEmitter(10 * 60 * 1000L);//指定超时时间
-        AtomicBoolean emitterClosed = new AtomicBoolean(false);
+        ResponseBodyEmitter emitter = new ResponseBodyEmitter(10 * 60 * 1000L);//指定超时时间、
+        AtomicBoolean emitterClosed = new AtomicBoolean(false);//标记 SSE 连接是否已经关闭(false:没关)
+
+        //disposableRef里面放着当前 AI 流式任务的取消按钮
         AtomicReference<Disposable> disposableRef = new AtomicReference<>();
+        //定义一个关闭 AI 流的函数
         Runnable disposeStream = () -> {
+            //订阅创建成功后，把 disposable 放进去；disposable代表“这次流式订阅关系”
             Disposable disposable = disposableRef.get();
+            //如果客户端断开、超时、报错，或者后端决定结束，就要取消这个订阅
             if (null != disposable && !disposable.isDisposed()) {
                 disposable.dispose();
             }
         };
+
+        //不是现在立刻执行，而是登记规则，emitter是 Spring MVC 提供的一个对象，用来做服务端持续向前端推送数据
+        //前端正常接收完成时触发
         emitter.onCompletion(() -> {
             emitterClosed.set(true);
             disposeStream.run();
         });
+        //超时触发
         emitter.onTimeout(() -> {
             emitterClosed.set(true);
             disposeStream.run();
         });
+        //SSE 发送过程中出错触发
         emitter.onError(error -> {
             emitterClosed.set(true);
             disposeStream.run();
@@ -200,15 +210,16 @@ public class AgentServiceController implements IAgentService {
             sendSseEvent(emitter, "status", "正在分析需求");
             log.info("流式对话 agentId:{} userId:{} sessionId:{} message:{}", requestDTO.getAgentId(), requestDTO.getUserId(), requestDTO.getSessionId(), requestDTO.getMessage());
             Disposable disposable = chatService.handleMessageStream(requestDTO.getAgentId(), requestDTO.getUserId(), requestDTO.getSessionId(), requestDTO.getMessage())
-                    //订阅这个流
+                    //订阅这个流；disposable代表“这次流式订阅关系”；只要这个订阅还活着，后端就会持续接收 AI 输出，并通过 SSE 发给前端
                     .subscribe(
                             //.subscribe() 已经帮你把流"拆开"了，这里event 就是这个流中的当前数据，每当流里收到一条正常数据时执行。
                             event -> {
+                                //第一步检查连接是否已经关闭，如果关闭了就不再发送
                                 if (emitterClosed.get()) {
                                     return;
                                 }
                                 try {
-                                    //使用 emitter 发送数据
+                                    //使用 emitter 发送数据；
                                     sendSseEvent(emitter, "delta", event.stringifyContent());
                                 } catch (Exception e) {
                                     if (emitterClosed.compareAndSet(false, true)) {
@@ -246,6 +257,7 @@ public class AgentServiceController implements IAgentService {
                                 }
                             }
                     );
+            //保存订阅对象
             disposableRef.set(disposable);
             if (emitterClosed.get()) {
                 disposeStream.run();
@@ -260,6 +272,7 @@ public class AgentServiceController implements IAgentService {
         return emitter;
     }
 
+    //把 Java 对象包装成 SSE 格式
     private void sendSseEvent(ResponseBodyEmitter emitter, String type, String content) throws Exception {
         emitter.send("data: " + JSON.toJSONString(Map.of("type", type, "content", content)) + "\n\n", MediaType.TEXT_EVENT_STREAM);
     }
