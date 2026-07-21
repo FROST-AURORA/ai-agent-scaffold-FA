@@ -69,13 +69,16 @@ public class ChatService implements IChatService {
         String appName = aiAgentRegisterVO.getAppName();
         InMemoryRunner runner = aiAgentRegisterVO.getRunner();
 
-        //如果 userId 已经有会话ID，直接返回；如果没有，则创建新会话并保存
+        /*//如果 userId 已经有会话ID，直接返回；如果没有，则创建新会话并保存
         return userSessions.computeIfAbsent(userId, uid -> {
             //创建一个会话（Session），相当于一次对话的上下文
             Session session = runner.sessionService().createSession(appName, uid)
-                    .blockingGet();
-            return session.id();
-        });
+                    .blockingGet();*/
+        Session session = runner
+                .sessionService()
+                .createSession(appName, userId)
+                .blockingGet();
+        return session.id();
     }
 
     /**

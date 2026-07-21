@@ -5,7 +5,7 @@ version: '3.8'
 services:
   ## 后端服务，注意修改 智能体 DRAWIOAGENT 配置。
   ai-draw-io-app:
-    image: ai-draw-io-app:1.4
+    image: ai-draw-io-app:1.6
 #    image: fuzhengwei/ai-draw-io-app:1.0
     container_name: ai-draw-io-app
     restart: on-failure
@@ -44,6 +44,17 @@ services:
       # 修改 http://192.168.1.110:8091/api/v1 为你的IP地址。
       - NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL:-http://124.221.171.105:8093/api/v1}
       - NODE_ENV=production
+
+  ai-draw-io-front-vue:
+    image: ai-draw-io-front-vue:1.1
+    container_name: ai-draw-io-front-vue
+    restart: always
+    ports:
+      - "5173:80"
+    environment:
+      - NEXT_PUBLIC_API_BASE_URL=/api/v1
+    networks:
+      - my-network
 
 networks:
   my-network:
