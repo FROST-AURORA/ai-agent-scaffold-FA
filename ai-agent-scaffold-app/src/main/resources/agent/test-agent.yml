@@ -11,7 +11,7 @@ ai:
           module:
             ai-api:
               base-url: https://dashscope.aliyuncs.com/compatible-mode
-              api-key: sk-a5c9b22c65a54fe6a6ac218f0690355e
+              api-key: ${ALIYUN_API_KEY}
               completions-path: /v1/chat/completions
               embeddings-path: /v1/embeddings
             chat-model:
@@ -20,12 +20,12 @@ ai:
                 - sse:
                     name: baidu-search
                     base-uri: http://appbuilder.baidu.com/v2/ai_search/mcp/
-                    sse-endpoint: sse?api_key=Bearer+bce-v3/ALTAK-VNHFDDhxotqBJEQtPgDJv/2c043efe186253a2d6195cb95a1ec2be70857256
+                    sse-endpoint: sse?api_key=Bearer+${BAIDU_API_KEY}
                     request-timeout: 5000
                 - sse:
                     name: baidu-map
                     base-uri: https://mcp.map.baidu.com/
-                    sse-endpoint: sse?ak=tV0NsP4Gmj8IL7mhvyjVZ7c6
+                    sse-endpoint: sse?ak=${BAIDU_MAP_API_KEY}
                     request-timeout: 5000
             agents:
               - name: CodeWriterAgent
